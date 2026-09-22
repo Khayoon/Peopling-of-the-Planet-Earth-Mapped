@@ -6,8 +6,6 @@
 
 [![Checks and Pages](https://github.com/Khayoon/Peopling-of-the-Planet-Earth-Mapped/actions/workflows/pages.yml/badge.svg)](https://github.com/Khayoon/Peopling-of-the-Planet-Earth-Mapped/actions/workflows/pages.yml)
 
-A dark slate world catches fire as the timeline advances, ember spreading from Africa with a hot leading edge at the frontier. Dated archaeological sites anchor the story; illustrative routes, exposed continental shelves and schematic ice sheets give it geographic context. Scrub through time, play the sequence, or select an entry in the field log.
-
 Built with **vanilla JavaScript, native ES modules, Canvas 2D, HTML and CSS**. There are no application dependencies, framework runtime, external map tiles or API keys. Node.js is used only for development, tests and packaging.
 
 ## What to try

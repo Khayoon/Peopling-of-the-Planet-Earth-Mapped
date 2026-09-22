@@ -1,0 +1,14 @@
+{
+  "name": "the-long-walk-out",
+  "version": "1.0.0",
+  "private": true,
+  "description": "An interactive human-migration atlas using native JavaScript modules and Canvas 2D.",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "test": "node --test",
+    "check": "node scripts/check.mjs",
+    "build": "node scripts/build.mjs"
+  }
+}

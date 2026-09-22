@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="An interactive atlas of human dispersal out of Africa over 300,000 years, a glowing ember reveal anchored to dated archaeological sites.">
+
+<title>The Long Walk Out — Human Migration Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,500;0,600;1,300&family=Barlow+Semi+Condensed:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="./styles.css">
+<link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
+</head>
+<body>
+
+
+
+<div class="wrap">
+
+  <header class="mast">
+    <div style="flex:1 1 340px">
+      <span class="eyebrow">300,000 years · one species · every habitable coast</span>
+      <h1>The Long Walk <em>Out</em></h1>
+    </div>
+    <p class="standfirst">Follow the human story out of Africa. A quiet world gradually warms with traces of our presence, anchored to dated sites — including the ones archaeologists still argue about.</p>
+  </header>
+
+  <div class="hud">
+    <div class="clock">
+      <span class="big" id="clockBig">21,000</span>
+      <span class="unit" id="clockUnit">years ago</span>
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">Sea level</span><span class="v" id="roSea">−125 m</span></div>
+      <div class="ro"><span class="k">Calendar</span><span class="v" id="roCal">19,050 BCE</span></div>
+      <div class="ro"><span class="k">Interval</span><span class="v era" id="roEra">Last Glacial Maximum</span></div>
+    </div>
+  </div>
+
+  <div class="plate">
+    <div class="map-viewport" tabindex="0" role="region" aria-label="World map; scroll horizontally on small screens">
+      <div class="map-surface">
+        <canvas id="map" width="1600" height="622" aria-label="World map showing the spread of Homo sapiens over time" aria-describedby="mapNote"></canvas>
+        <div class="tip" id="tip" role="status"><b></b><span></span><i></i></div>
+      </div>
+    </div>
+    <p class="map-pan-hint">↔ Swipe across the map to see more of the world</p>
+    <div class="plate-foot">
+      <span class="key"><i class="sw settled"></i>Modelled presence</span>
+      <span class="key"><i class="sw quiet"></i>Outside the current reveal</span>
+      <span class="key"><i class="sw front"></i>Recent arrival</span>
+      <span class="key"><i class="sw iceb"></i>Ice sheet</span>
+      <span class="key"><i class="sw shelfb"></i>Seabed exposed by low sea level</span>
+      <span class="key"><i class="sw firm"></i>Dated site</span>
+      <span class="key"><i class="sw contested"></i>Disputed date</span>
+    </div>
+    <p class="map-note" id="mapNote"><strong>A land-presence map.</strong> Ocean shading is background geography; it does not indicate exploration. Dark land is not proof of absence.</p>
+  </div>
+
+  <div class="transport">
+    <button class="play" id="play"><span class="glyph" id="playGlyph">▶</span><span id="playLabel">Play from 300,000 BP</span></button>
+    <div class="speeds" role="group" aria-label="Playback speed">
+      <button data-sp="0.5" aria-pressed="false">0.5×</button>
+      <button data-sp="1" aria-pressed="true">1×</button>
+      <button data-sp="3" aria-pressed="false">3×</button>
+    </div>
+    <button class="ghost" id="toLGM">Jump to glacial maximum</button>
+    <button class="ghost" id="toNow">Present</button>
+  </div>
+
+  <div class="scrub">
+    <input type="range" id="scrub" min="0" max="10000" value="0" step="1" aria-label="Time" />
+    <div class="axis" id="axis"></div>
+    <div class="axisnote">axis is stretched — recent millennia get more room</div>
+  </div>
+
+  <div class="cols">
+    <section class="prose">
+      <h2>How to read this</h2>
+      <p>Ember shows <strong>modelled human presence</strong> at the selected date, with a hotter leading edge where arrival is recent. Dated sites anchor the reveal, and illustrative dispersal paths fill the space between them. This is not a census or a map of everything people knew. Dark land sits outside the current modelled presence, not necessarily outside human experience. When the model includes a retreat, the ember cools back to slate — north-west Europe and northern Siberia empty out under the ice, and Greenland is abandoned and resettled more than once. Oceans are a constant background with no explored or unexplored status.</p>
+      <p>For the first quarter of a million years this map only lights up inside Africa, and that is enforced, not hoped for: the African spread is fenced to the continent so it cannot bleed across Gibraltar or the Red Sea.</p>
+      <p>Then people leave, and mostly fail. <strong>Misliya</strong> at 185,000 years ago, <strong>Skhul and Qafzeh</strong> at 120–90,000, <strong>Al Wusta</strong> in Arabia, <strong>Grotte Mandrin</strong> in France at 54,000 — all real, all dated, all extinguished. You can watch each one fade back to slate. The dispersal that actually founded everyone alive outside Africa today comes late, after about 50,000 years ago, and the reason we can be firm about that is Neanderthal DNA: every non-African carries it, and the interbreeding is dated to 49,000–45,000 years ago. A founding population older than that would not fit.</p>
+
+      <h3>What the map is guessing at</h3>
+      <ul class="caveats">
+        <li>Routes are drawn as smooth arcs. Real dispersals were slow, reversible, and full of dead ends; a line between two dated sites is a hypothesis, not a road.</li>
+        <li>The 65,000-year dates in Sunda and Sahul do not fit the genetic ceiling. Lida Ajer and Madjedbebe are drawn as isolated toeholds that fade, and the surviving wave arrives around 50–45,000 years ago. That is one reading of an argument that is still live; the excavators read it differently.</li>
+        <li>Land bridges are pinned to their own dated chronologies rather than derived purely from the sea-level curve here. Beringia opens about 37,000 years ago and drowns by 11,000; Sundaland is continuous from roughly 72,000 to 12,000. Sea level during the middle of the last glacial is itself disputed, and a coarse curve makes bridges flicker on and off, which is an artefact, not history.</li>
+        <li>The ember is a flat fill, not terrain. It carries only whether the model places people there, and the soft edge is a drawing style rather than a measured margin of error.</li>
+        <li>Coastlines are today's. The pale grey shelves — Sunda, Sahul, Beringia, Doggerland — are approximate reconstructions of land exposed by low sea level, not surveyed bathymetry. Most coastal archaeology of the Ice Age is underwater and undiscovered.</li>
+        <li>Ice sheets are schematic outlines scaled by a standard sea-level curve, drawn to show the barrier, not its exact edge.</li>
+        <li>Absence of evidence is thin in tropical, forested, and submerged places, where organic material rarely survives. Sparse regions are probably under-dated rather than empty.</li>
+        <li>Dates on this map are calendar years before present. Where a site's age is a range, the map uses a mid-point and the log gives the range.</li>
+        <li>A few places stay dark on purpose. Severnaya Zemlya and Franz Josef Land were only sighted in the 1870s–1910s and have never had a permanent population; Antarctica, off the bottom of this map, still has none.</li>
+        <li>Watch the last flickers. Mauritius, the Azores, Cape Verde, Bermuda, the Falklands, the Seychelles and the Galápagos had no people on them at all until the 1500s–1800s — they are the only sizeable habitable land that waited for ships rather than canoes.</li>
+      </ul>
+
+      <div class="srcs">
+        <h2>Sources for the dated sites</h2>
+        <ul>
+          <li><a href="https://www.nature.com/articles/nature22968">Clarkson et al. 2017, <em>Nature</em></a> — Madjedbebe, 65 ka</li>
+          <li><a href="https://www.abc.net.au/news/science/2025-11-29/sahul-aboriginal-australia-65000-genetic-evidence/106054352">Genetic re-estimate of Sahul arrival, 2025</a> — the ~60 ka counter-case</li>
+          <li><a href="https://www.nature.com/articles/s41586-024-08420-x">Sümer et al. 2024, <em>Nature</em></a> — Neanderthal admixture, 50.5–43.5 ka</li>
+          <li><a href="https://www.science.org/doi/10.1126/science.adh5007">Pigati et al. 2025, <em>Science</em></a> — White Sands footprints re-dated</li>
+          <li><a href="https://www.science.org/doi/10.1126/sciadv.abj9496">Slimak et al. 2022, <em>Science Advances</em></a> — Grotte Mandrin, 54 ka</li>
+          <li><a href="https://www.nature.com/articles/s41559-023-02303-6">Mylopotamitaki et al. 2024, <em>Nature Ecol. Evol.</em></a> — Ranis, 45 ka</li>
+          <li><a href="https://www.nhm.ac.uk/press-office/press-releases/scientists-discover-earliest-evidence-modern-humans-europe.html">Bacho Kiro, 46–44 ka</a> — Natural History Museum</li>
+          <li><a href="https://www.usgs.gov/news/national-news-release/study-confirms-age-oldest-fossil-human-footprints-north-america">USGS 2025</a> — independent confirmation, White Sands</li>
+          <li><a href="https://www.nature.com/articles/s41586-021-03419-0">Wilkins et al. 2021, <em>Nature</em></a> — Ga-Mohana Hill, Kalahari, 105 ka</li>
+          <li><a href="https://www.sciencedirect.com/science/article/abs/pii/S0047248406001801">Barker et al. 2007, <em>J. Human Evolution</em></a> — Niah Cave rainforest foraging</li>
+        </ul>
+      </div>
+    </section>
+
+    <aside>
+      <h2>Field log <span id="logCount" style="float:right;font-family:var(--mono);color:var(--bone-faint)"></span></h2>
+      <div class="log" id="log"><ol id="logList"></ol></div>
+    </aside>
+  </div>
+</div>
+
+<footer class="project-footer"><span>An illustrative atlas · Made with Natural Earth</span><a href="https://github.com/Khayoon/Peopling-of-the-Planet-Earth-Mapped">Source code &amp; model notes ↗</a></footer>
+<script type="module" src="./src/atlas.js"></script>
+
+</body>
+</html>

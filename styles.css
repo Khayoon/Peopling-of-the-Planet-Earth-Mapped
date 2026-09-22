@@ -23,9 +23,9 @@ html{color-scheme:dark}body{margin:0;background:#060d10;color:#ece5d8;font:14px/
     --panel:#0a1418;
     --panel-2:#0d1a1f;
 
-    --display:"Spectral",Georgia,"Times New Roman",serif;
-    --ui:"Barlow Semi Condensed","Helvetica Neue",Arial,sans-serif;
-    --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+    --display:"Fraunces",Georgia,"Times New Roman",serif;
+    --ui:"Fira Sans Condensed","Helvetica Neue",Arial,sans-serif;
+    --mono:"Fira Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
   }
 
   *{box-sizing:border-box}

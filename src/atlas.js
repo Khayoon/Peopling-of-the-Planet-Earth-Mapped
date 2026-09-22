@@ -218,7 +218,7 @@ function drawPresence(c){
 function drawOceanLabels(c){
   if(W/DPR<620) return;
   c.save();
-  c.font="italic "+(13*DPR)+"px Georgia, serif";
+  c.font="italic "+(13*DPR)+"px Fraunces, Georgia, serif";
   c.textAlign="center"; c.fillStyle="rgba(147,171,177,0.22)";
   for(const [name,x,y] of [["Pacific Ocean",-139,4],["Atlantic Ocean",-33,9],["Indian Ocean",78,-30]]){
     c.fillText(name,px(x),py(y));
@@ -334,7 +334,7 @@ function rebuildScene(){
   recent.sort((a,b)=>a.age-b.age);
   const show=recent.slice(0,4);
   if(hoverSite&&!show.some(r=>r.s===hoverSite)) show.push({s:hoverSite,age:0,X:px(hoverSite.x),Y:py(hoverSite.y)});
-  above.font="500 "+(12.5*DPR)+"px 'Barlow Semi Condensed', Arial, sans-serif";
+  above.font="500 "+(12.5*DPR)+"px 'Fira Sans Condensed', Arial, sans-serif";
   above.textBaseline="middle";
   for(const r of show){
     const fade=r.s===hoverSite?1:Math.max(0.3,1-r.age/Math.max(2500,r.s.t*0.14));

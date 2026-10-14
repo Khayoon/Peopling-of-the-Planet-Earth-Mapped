@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="An interactive atlas of human dispersal out of Africa over 300,000 years, a glowing ember reveal anchored to dated archaeological sites.">
+<meta name="description" content="Four million years of a shared human world. Explore early hominins in Africa, Neanderthals, Denisovans, and the original Homo sapiens migration atlas.">
 
-<title>The Long Walk Out — Human Migration Atlas</title>
+<title>Before We Were Alone — A Shared Human World</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,300&family=Fira+Sans+Condensed:wght@400;500;600&family=Fira+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="./styles.css">
+<link rel="stylesheet" href="./styles.css?v=deep-time-20261005">
 <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
 </head>
 <body>
@@ -19,63 +19,98 @@
 <div class="wrap">
 
   <header class="mast">
-    <div style="flex:1 1 340px">
-      <span class="eyebrow">300,000 years · one species · every habitable coast</span>
-      <h1>The Long Walk <em>Out</em></h1>
+    <div class="mast-title">
+      <div class="mast-meta"><span class="eyebrow">A deep-time atlas</span><span class="preview-badge">Local preview</span></div>
+      <h1>Before we were <em>alone</em></h1>
+      <p class="subtitle">Four million years of a shared human world</p>
     </div>
-    <p class="standfirst">Follow the human story out of Africa. A quiet world gradually warms with traces of our presence, anchored to dated sites — including the ones archaeologists still argue about.</p>
+    <p class="standfirst">Begin in East Africa. Follow earlier hominins across a continent, then watch the world become home to several human lineages.</p>
   </header>
+
+  <nav class="chapters" aria-label="Chapters in the human story">
+    <button class="chapter" data-chapter="4000000" aria-pressed="true"><span class="chapter-number">01</span><span>East Africa<small>4 million years ago</small></span></button>
+    <button class="chapter" data-chapter="2500000" aria-pressed="false"><span class="chapter-number">02</span><span>Across Africa<small>2.5 million years ago</small></span></button>
+    <button class="chapter" data-chapter="1800000" aria-pressed="false"><span class="chapter-number">03</span><span>Beyond Africa<small>1.8 million years ago</small></span></button>
+    <button class="chapter" data-chapter="250000" aria-pressed="false"><span class="chapter-number">04</span><span>A shared world<small>250,000 years ago</small></span></button>
+    <button class="chapter" data-chapter="60000" aria-pressed="false"><span class="chapter-number">05</span><span>Sapiens dispersal<small>60,000 years ago</small></span></button>
+  </nav>
 
   <div class="hud">
     <div class="clock">
-      <span class="big" id="clockBig">21,000</span>
+      <span class="big" id="clockBig">4,000,000</span>
       <span class="unit" id="clockUnit">years ago</span>
     </div>
     <div class="readouts">
-      <div class="ro"><span class="k">Sea level</span><span class="v" id="roSea">−125 m</span></div>
-      <div class="ro"><span class="k">Calendar</span><span class="v" id="roCal">19,050 BCE</span></div>
-      <div class="ro"><span class="k">Interval</span><span class="v era" id="roEra">Last Glacial Maximum</span></div>
+      <div class="ro"><span class="k">Sea level</span><span class="v" id="roSea">Not reconstructed</span></div>
+      <div class="ro"><span class="k">Calendar</span><span class="v" id="roCal">Deep time</span></div>
+      <div class="ro"><span class="k">Interval</span><span class="v era" id="roEra">Pliocene Africa</span></div>
     </div>
   </div>
 
   <div class="plate">
-    <div class="map-viewport" tabindex="0" role="region" aria-label="World map; scroll horizontally on small screens">
+    <div class="map-heading">
+      <div class="chapter-caption"><span class="map-kicker" id="cameraLabel">East Africa · regional view</span><h2 id="chapterName">Three groups in East Africa</h2><p id="chapterNote">Three groups of Australopithecus share the East African landscape.</p><p class="opening-aside" id="openingAside"><span>Opening narrative</span> At the forest edge, competition with gorillas and chimpanzees pushes these groups toward the grasslands.</p></div>
+      <div class="scene-actions"><span id="sceneAge" class="scene-age">4.0 Ma</span><button id="scenePlay" class="scene-play" type="button">▶ Begin</button><label class="camera-follow"><input type="checkbox" id="followCamera" checked><span>Follow the journey</span></label></div>
+    </div>
+    <div class="layer-controls" role="group" aria-label="Show or hide human lineages">
+      <span class="layer-label">Show on map</span>
+      <button class="layer" data-layer="early" aria-pressed="true"><i aria-hidden="true"></i>Earlier hominins</button>
+      <button class="layer" data-layer="neanderthal" aria-pressed="true"><i aria-hidden="true"></i>Neanderthals</button>
+      <button class="layer" data-layer="denisovan" aria-pressed="true"><i aria-hidden="true"></i>Denisovans</button>
+      <button class="layer" data-layer="sapiens" aria-pressed="true"><i aria-hidden="true"></i>Homo sapiens</button>
+    </div>
+    <div class="map-viewport" tabindex="0" role="region" aria-label="Interactive map of hominin dispersal">
       <div class="map-surface">
-        <canvas id="map" width="1600" height="622" aria-label="World map showing the spread of Homo sapiens over time" aria-describedby="mapNote"></canvas>
+        <canvas id="map" width="1600" height="760" aria-label="Map showing earlier hominins, Neanderthals, Denisovans, and Homo sapiens over time" aria-describedby="mapNote"></canvas>
         <div class="tip" id="tip" role="status"><b></b><span></span><i></i></div>
       </div>
     </div>
-    <p class="map-pan-hint">↔ Swipe across the map to see more of the world</p>
+    <div class="lineage-context" id="lineageContext">
+      <div class="context-intro"><span class="map-kicker">The opening scene</span><p>Three groups<br>in East Africa</p></div>
+      <div class="lineage-card"><span class="branch-mark" aria-hidden="true">01</span><div><h3>Australopithecus</h3><p>Afar · Ethiopia</p></div></div>
+      <div class="lineage-card"><span class="branch-mark" aria-hidden="true">02</span><div><h3>Australopithecus</h3><p>Turkana · northern Kenya</p></div></div>
+      <div class="lineage-card"><span class="branch-mark" aria-hidden="true">03</span><div><h3>Australopithecus</h3><p>Southern Rift Valley</p></div></div>
+      <p class="context-note">Three schematic populations, not three separate species.</p>
+    </div>
     <div class="plate-foot">
-      <span class="key"><i class="sw settled"></i>Modelled presence</span>
       <span class="key"><i class="sw quiet"></i>Outside the current reveal</span>
-      <span class="key"><i class="sw front"></i>Recent arrival</span>
+      <span class="key"><i class="sw front"></i>Sapiens arrival front</span>
       <span class="key"><i class="sw iceb"></i>Ice sheet</span>
       <span class="key"><i class="sw shelfb"></i>Seabed exposed by low sea level</span>
       <span class="key"><i class="sw firm"></i>Dated site</span>
       <span class="key"><i class="sw contested"></i>Disputed date</span>
     </div>
-    <p class="map-note" id="mapNote"><strong>A land-presence map.</strong> Ocean shading is background geography; it does not indicate exploration. Dark land is not proof of absence.</p>
+    <p class="map-note" id="mapNote"><strong>An illustrative map of presence.</strong> Fossil anchors are evidence; the ranges connecting them are interpretations. Dark land is not proof of absence.</p>
   </div>
 
   <div class="transport">
-    <button class="play" id="play"><span class="glyph" id="playGlyph">▶</span><span id="playLabel">Play from 300,000 BP</span></button>
+    <button class="play" id="play"><span class="glyph" id="playGlyph">▶</span><span id="playLabel">Play the journey</span></button>
     <div class="speeds" role="group" aria-label="Playback speed">
       <button data-sp="0.5" aria-pressed="false">0.5×</button>
       <button data-sp="1" aria-pressed="true">1×</button>
       <button data-sp="3" aria-pressed="false">3×</button>
     </div>
-    <button class="ghost" id="toLGM">Jump to glacial maximum</button>
+    <button class="ghost" id="toSapiens">Homo sapiens · 300 ka</button>
+    <button class="ghost" id="toLGM">Glacial maximum</button>
     <button class="ghost" id="toNow">Present</button>
   </div>
 
   <div class="scrub">
     <input type="range" id="scrub" min="0" max="10000" value="0" step="1" aria-label="Time" />
     <div class="axis" id="axis"></div>
-    <div class="axisnote">axis is stretched — recent millennia get more room</div>
+    <div class="axisnote">A stretched timeline · recent millennia get more room · BP = years before present</div>
   </div>
 
   <div class="cols">
+    <div class="story-notes">
+      <section class="evidence-section" aria-labelledby="evidenceHeading">
+        <h2 id="evidenceHeading">Evidence &amp; interpretation</h2>
+        <p class="evidence-lead" id="deepTimeStatus" aria-live="polite">Three groups of Australopithecus begin the story in East Africa.</p>
+        <div id="deepEvidence" class="deep-evidence"></div>
+        <p class="evidence-note">Fossil anchors are evidence. Connecting ranges and camera moves are illustrative. Coastlines are modern; deep-time sea level is not reconstructed.</p>
+      </section>
+      <details class="original-atlas">
+        <summary>The Homo sapiens atlas<span>Original model, caveats &amp; sources</span></summary>
     <section class="prose">
       <h2>How to read this</h2>
       <p>Ember shows <strong>modelled human presence</strong> at the selected date, with a hotter leading edge where arrival is recent. Dated sites anchor the reveal, and illustrative dispersal paths fill the space between them. This is not a census or a map of everything people knew. Dark land sits outside the current modelled presence, not necessarily outside human experience. When the model includes a retreat, the ember cools back to slate — north-west Europe and northern Siberia empty out under the ice, and Greenland is abandoned and resettled more than once. Oceans are a constant background with no explored or unexplored status.</p>
@@ -112,6 +147,8 @@
         </ul>
       </div>
     </section>
+      </details>
+    </div>
 
     <aside>
       <h2>Field log <span id="logCount" style="float:right;font-family:var(--mono);color:var(--bone-faint)"></span></h2>
@@ -120,8 +157,8 @@
   </div>
 </div>
 
-<footer class="project-footer"><span>An illustrative atlas · Made with Natural Earth</span><a href="https://github.com/Khayoon/Peopling-of-the-Planet-Earth-Mapped">Source code &amp; model notes ↗</a></footer>
-<script type="module" src="./src/atlas.js"></script>
+<footer class="project-footer"><span>Before we were alone · An illustrative atlas · Natural Earth geography</span><a href="https://github.com/Khayoon/Peopling-of-the-Planet-Earth-Mapped">Source code &amp; model notes ↗</a></footer>
+<script type="module" src="./src/atlas.js?v=deep-time-20261005"></script>
 
 </body>
 </html>

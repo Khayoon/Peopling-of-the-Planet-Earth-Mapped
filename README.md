@@ -1,5 +1,10 @@
 # The Long Walk Out
 
+> **Local experimental version: Before we were alone.** This branch adds a
+> four-million-year opening, a camera that follows the journey, and separate
+> early-hominin, Neanderthal, and Denisovan layers. The original Homo sapiens
+> model is preserved. See [local preview instructions](docs/LOCAL_PREVIEW.md).
+
 **An interactive atlas of human dispersal over 300,000 years.**
 
 [Explore the live map](https://khayoon.github.io/Peopling-of-the-Planet-Earth-Mapped/) · [Architecture](docs/ARCHITECTURE.md) · [Code walkthrough](docs/CODE_WALKTHROUGH.md) · [Sources & assumptions](docs/METHODOLOGY.md) · [Where the dates live](docs/TIMELINE.md)

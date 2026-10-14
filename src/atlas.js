@@ -1,8 +1,11 @@
 import { LAND } from "../data/land.js";
 import { CONTAIN, SHELF, ISLET, ICE } from "../data/geography.js";
 import { SITES, STRANDS, ISLANDS } from "../data/migration.js";
-import { pos, timeAt, seaLevel, iceShape, eraAt, presence, shelfAlpha, hotOf } from "./model.js";
+import { seaLevel, iceShape, eraAt, presence, shelfAlpha, hotOf } from "./model.js";
 import { createSeeds } from "./seeds.js";
+import { START_BP, extendedPos as pos, extendedTimeAt as timeAt, cameraAt, chapterAt, formatAge } from "./deep-time-model.js";
+import { LINEAGES, ARCHAEA_SITES, SOURCES } from "../data/deep-time.js";
+import { createDeepTimeRenderer } from "./deep-time-renderer.js";
 
 const seeds = createSeeds(STRANDS, ISLANDS);
 const ROUTES = STRANDS.filter(s => s.show && s.p.length > 1);
@@ -10,8 +13,14 @@ const ROUTES = STRANDS.filter(s => s.show && s.p.length > 1);
 /* ============================ PROJECTION ============================ */
 const LAT_N=84, LAT_S=-56;
 let W=1600,H=622,DPR=1;
-const px=lon=>(lon+180)/360*W;
-const py=lat=>(LAT_N-lat)/(LAT_N-LAT_S)*H;
+let view=cameraAt(START_BP), followCamera=true;
+const enabled={early:true,neanderthal:true,denisovan:true,sapiens:true};
+const px=lon=>(lon-view.lon+view.span/2)/view.span*W;
+const py=lat=>(view.lat+view.span*(LAT_N-LAT_S)/720-lat)/(view.span*(LAT_N-LAT_S)/360)*H;
+const deepRenderer=createDeepTimeRenderer({
+  project:(lon,lat)=>({x:px(lon),y:py(lat)}),
+  dimensions:()=>({W,H,DPR}), enabled,
+});
 
 /* ============================ CANVASES ============================ */
 const cv=document.getElementById("map"), ctx=cv.getContext("2d");
@@ -33,17 +42,17 @@ function ringPath(c,pts,close){
     const X=px(p[0]),Y=py(p[1]);
     if(!started){c.moveTo(X,Y);started=true;}
     else{
-      if(prev!==null&&Math.abs(X-prev)>W*0.6){ c.moveTo(X,Y); } else c.lineTo(X,Y);
+      if(prev!==null&&Math.abs(p[0]-prev)>216){ c.moveTo(X,Y); } else c.lineTo(X,Y);
     }
-    prev=X;
+    prev=p[0];
   }
   if(close) c.closePath();
 }
 function drawLand(c,style,stroke,lw){ c.fillStyle=style; c.beginPath();
   for(const r of LAND){ let prev=null,first=true;
     for(const p of r){ const X=px(p[0]),Y=py(p[1]);
-      if(first||(prev!==null&&Math.abs(X-prev)>W*0.6)){c.moveTo(X,Y);first=false;} else c.lineTo(X,Y);
-      prev=X; }
+      if(first||(prev!==null&&Math.abs(p[0]-prev)>216)){c.moveTo(X,Y);first=false;} else c.lineTo(X,Y);
+      prev=p[0]; }
     c.closePath(); }
   if(style) c.fill("evenodd");
   if(stroke){ c.strokeStyle=stroke; c.lineWidth=lw; c.stroke(); }
@@ -82,6 +91,7 @@ function sizeAll(){
   FW=Math.max(160,Math.round(W*0.42)); FH=Math.max(70,Math.round(H*0.42));
   for(const c of [presenceC,hotC]){ c.width=FW; c.height=FH; }
   for(const c of [landC,tmpC,terrainC,belowC,aboveC]){ c.width=W; c.height=H; }
+  deepRenderer.resize();
   lastSL=999; resetBake(); buildMasks();
   document.fonts&&document.fonts.ready.then(()=>{dirty=true;});
   dirty=true;
@@ -92,7 +102,7 @@ function buildLand(tNow,sl){
   lnd.clearRect(0,0,W,H);
   drawLand(lnd,"#fff");
   drawIslets(lnd,"#fff");
-  for(const sh of SHELF){ const a=shelfAlpha(sh,tNow,sl); if(a<=0) continue;
+  for(const sh of tNow<=300000?SHELF:[]){ const a=shelfAlpha(sh,tNow,sl); if(a<=0) continue;
     lnd.globalAlpha=a; ringPath(lnd,sh.p,true); lnd.fillStyle="#fff"; lnd.fill(); }
   lnd.globalAlpha=1;
 
@@ -227,7 +237,7 @@ function drawOceanLabels(c){
 }
 
 /* ============================ SCENE ============================ */
-let dirty=true, T=21000, playing=false, speed=1, lastFrame=0;
+let dirty=true, T=START_BP, playing=false, speed=1, lastFrame=0, openingElapsed=0;
 const tip=document.getElementById("tip"), tipB=tip.querySelector("b"),
       tipS=tip.querySelector("span"), tipI=tip.querySelector("i");
 let hoverSite=null;
@@ -235,9 +245,14 @@ let hoverSite=null;
 // Ocean -> cool terrain & shelves -> warm presence -> ice -> arrivals -> routes -> sites.
 // The ocean treatment is independent of the historical presence mask.
 function rebuildScene(){
-  const t=T, sl=seaLevel(t);
+  const t=T, sl=t>300000?0:seaLevel(t);
+  const nextView=followCamera?cameraAt(t):cameraAt(0);
+  if(nextView.lon!==view.lon||nextView.lat!==view.lat||nextView.span!==view.span){
+    view=nextView; resetBake(); buildMasks(); lastLandT=-1;
+  }
   if(Math.abs(sl-lastSL)>1.2||t!==lastLandT){ buildLand(t,sl); lastSL=sl; lastLandT=t; }
-  paintPresence(t);
+  if(enabled.sapiens&&t<=300000) paintPresence(t);
+  else { presenceMask.clearRect(0,0,FW,FH); hot.clearRect(0,0,FW,FH); }
 
   /* ---- atlas ground ---- */
   const og=below.createLinearGradient(0,0,0,H);
@@ -252,13 +267,14 @@ function rebuildScene(){
   below.strokeStyle="rgba(120,170,185,0.10)"; below.beginPath();
   below.moveTo(0,py(0)); below.lineTo(W,py(0)); below.stroke();
 
-  for(const sh of SHELF){ const a=shelfAlpha(sh,t,sl); if(a<=0) continue;
+  for(const sh of t<=300000?SHELF:[]){ const a=shelfAlpha(sh,t,sl); if(a<=0) continue;
     below.globalAlpha=a*0.95; ringPath(below,sh.p,true); below.fillStyle="#16262a"; below.fill(); }
   below.globalAlpha=1;
 
   drawLand(below,"#223034");
   drawIslets(below,"#2b3b40");
-  drawPresence(below);
+  deepRenderer.drawPresence(below,t,landC);
+  if(enabled.sapiens) drawPresence(below);
   drawLand(below,null,"rgba(150,195,208,0.22)",Math.max(1,DPR*0.7));
   drawOceanLabels(below);
 
@@ -267,7 +283,7 @@ function rebuildScene(){
 
   // Ice: the part that floated over sea belongs to glacial sheets only, so a
   // present-day cap no longer paints a pale lens across the ocean beside it.
-  const iceShapes=ICE.map(sh=>iceShape(sh,t)).filter(Boolean);
+  const iceShapes=(t<=300000?ICE:[]).map(sh=>iceShape(sh,t)).filter(Boolean);
   if(iceShapes.length){
     tmp.clearRect(0,0,W,H);
     let anySea=false;
@@ -296,8 +312,8 @@ function rebuildScene(){
   above.globalCompositeOperation="source-over"; above.globalAlpha=1;
 
   // approximate routes
-  above.lineWidth=Math.max(1,DPR*1.1); above.setLineDash([DPR*4,DPR*5]); above.lineCap="round";
-  for(const r of ROUTES){
+  above.lineWidth=Math.max(1,DPR*1.1); above.setLineDash([DPR*4,DPR*5]); above.lineCap="round"; above.lineJoin="round";
+  for(const r of enabled.sapiens?ROUTES:[]){
     if(T>r.t0) continue;
     const done=Math.max(0,Math.min(1,(r.t0-T)/((r.t0-r.t1)||1)));
     if(r.gone!==undefined&&T<r.gone&&!(r.back!==undefined&&T<r.back)) continue;
@@ -309,7 +325,7 @@ function rebuildScene(){
 
   // sites
   const recent=[];
-  for(const s of SITES){
+  for(const s of enabled.sapiens?SITES:[]){
     if(T>s.t) continue;
     const age=s.t-T, appear=0.45+0.55*Math.min(1,age/Math.max(120,s.t*0.02));
     const X=px(s.x), Y=py(s.y);
@@ -333,7 +349,7 @@ function rebuildScene(){
   // labels: the four most recent arrivals, plus whatever is hovered
   recent.sort((a,b)=>a.age-b.age);
   const show=recent.slice(0,4);
-  if(hoverSite&&!show.some(r=>r.s===hoverSite)) show.push({s:hoverSite,age:0,X:px(hoverSite.x),Y:py(hoverSite.y)});
+  if(hoverSite&&!hoverSite.group&&!show.some(r=>r.s===hoverSite)) show.push({s:hoverSite,age:0,X:px(hoverSite.x),Y:py(hoverSite.y)});
   above.font="500 "+(12.5*DPR)+"px 'Fira Sans Condensed', Arial, sans-serif";
   above.textBaseline="middle";
   for(const r of show){
@@ -347,6 +363,7 @@ function rebuildScene(){
     above.fillText(r.s.n,tx,r.Y);
   }
   above.textAlign="left";
+  deepRenderer.drawDetails(above,t,hoverSite);
 
   updateHUD(t,sl);
 }
@@ -372,34 +389,76 @@ function updateHUD(t,sl){
   }
   el("roSea").textContent=(sl<-0.5?"−":"")+Math.abs(Math.round(sl))+" m";
   el("roEra").textContent=eraAt(t);
+  if(t>300000){
+    el("roSea").textContent="Not reconstructed";
+    el("roCal").textContent="Deep time";
+    el("roEra").textContent=t>2580000?"Pliocene":"Pleistocene";
+  }
+  if(t>=1000000){
+    el("clockBig").textContent=(t/1000000).toFixed(2);
+    el("clockUnit").textContent="million years ago";
+  }
+  const chapter=chapterAt(t);
+  el("chapterName").textContent=chapter.title;
+  el("chapterNote").textContent=chapter.note;
+  el("cameraLabel").textContent=followCamera?cameraAt(t).label:"World · camera held";
+  el("sceneAge").textContent=t<60?"Present":formatAge(t);
+  el("lineageContext").hidden=t<2800000;
+  const aside=el("openingAside");
+  if(aside) aside.hidden=t<3900000||openingElapsed>=1200;
+  el("deepTimeStatus").textContent=t>300000?"Follow the yellow populations from East Africa toward the south, then beyond the continent.":
+    t>32000?"Other human populations share this chapter. Switch layers to compare their ranges.":
+    "The original Homo sapiens journey continues in ember.";
+  const chapterButtons=[...document.querySelectorAll("[data-chapter]")];
+  const chapterDates={"african-origins":4000000,"african-expansion":2500000,"early-homo":1800000,"shared-world":250000,"sapiens-dispersal":60000,"today":60000};
+  const active=chapterButtons.find(b=>Number(b.dataset.chapter)===chapterDates[chapter.id]);
+  for(const button of chapterButtons){
+    button.setAttribute("aria-current",button===active?"step":"false");
+    button.setAttribute("aria-pressed",String(button===active));
+  }
 }
 
 const logList=el("logList");
-const order=[...SITES].sort((a,b)=>b.t-a.t);
+const order=[...ARCHAEA_SITES,...SITES].sort((a,b)=>b.t-a.t);
 const rows=order.map(s=>{
   const li=document.createElement("li");
   const b=document.createElement("button");
   b.className="ev"; b.type="button";
-  const when=s.t>=10000?nf.format(Math.round(s.t/1000))+" ka":s.t>=1000?nf.format(Math.round(s.t/100)*100):nf.format(s.t);
+  const when=s.t>=1000000?formatAge(s.t):s.t>=10000?nf.format(Math.round(s.t/1000))+" ka":s.t>=1000?nf.format(Math.round(s.t/100)*100):nf.format(s.t);
   const suffix=s.t<10000?" yr":"";
   b.innerHTML='<span class="when">'+when+suffix+'</span><span class="what"><span class="nm">'+s.n+
-    (s.c!=="firm"?' <span class="chip '+s.c+'">'+s.c+'</span>':'')+
+    (s.group?' <span class="chip">'+LINEAGES[s.group].label+'</span>':s.c!=="firm"?' <span class="chip '+s.c+'">'+s.c+'</span>':'')+
     '</span><span class="nt">'+s.pl+' — '+s.note+'</span></span>';
   b.addEventListener("click",()=>jump(s.t));
+  if(s.group) b.style.setProperty("--event-color",LINEAGES[s.group].color);
   li.appendChild(b); logList.appendChild(li);
   return {s,b};
 });
 function updateLog(t){
-  let n=0;
-  for(const r of rows){ const on=t<=r.s.t; if(on) n++; r.b.classList.toggle("on",on); }
-  el("logCount").textContent=n+" / "+rows.length;
+  let n=0,total=0;
+  for(const r of rows){
+    const on=t<=r.s.t, visible=enabled[r.s.group||"sapiens"];
+    if(visible){total++;if(on)n++;}
+    r.b.classList.toggle("on",on); r.b.closest("li").hidden=!visible;
+  }
+  el("logCount").textContent=n+" / "+total;
+}
+
+const sourceDetails=document.createElement("details"), sourceSummary=document.createElement("summary");
+sourceSummary.textContent=`Read the ${SOURCES.length} source references`;
+sourceDetails.append(sourceSummary); el("deepEvidence").append(sourceDetails);
+for(const source of SOURCES){
+  const p=document.createElement("p"), a=document.createElement("a");
+  a.href=source.url; a.textContent=source.title; a.target="_blank"; a.rel="noopener noreferrer";
+  p.append(a); if(source.note) p.append(document.createTextNode(" — "+source.note));
+  sourceDetails.append(p);
 }
 
 /* ---- axis ticks ---- */
 const axis=el("axis");
 // `opt` ticks are dropped at phone width so the labels never collide
-const TICKS=[["300 ka",300000,0],["100 ka",100000,1],["70 ka",70000,0],["40 ka",40000,1],
-  ["20 ka",20000,0],["10 ka",10000,1],["3 ka",3000,1],["now",0,0]];
+const TICKS=[["4 Ma",START_BP,0],["3 Ma",3000000,1],["2 Ma",2000000,1],["1 Ma",1000000,0],
+  ["300 ka",300000,1],["70 ka",70000,0],["20 ka",20000,1],["now",0,0]];
 TICKS.forEach(([lab,t,opt],i)=>{
   const d=document.createElement("span");
   d.className="t"+(i===0?" first":i===TICKS.length-1?" last":"")+(opt?" opt":"");
@@ -411,25 +470,38 @@ TICKS.forEach(([lab,t,opt],i)=>{
 const scrub=el("scrub");
 let touched=false;
 function setT(t,fromScrub){
-  T=Math.max(0,Math.min(300000,t));
+  T=Math.max(0,Math.min(START_BP,t));
+  hoverSite=null; tip.classList.remove("on");
   if(!fromScrub) scrub.value=Math.round(pos(T)*10000);
+  scrub.setAttribute("aria-valuetext",T===0?"Present":`${formatAge(T)} before present`);
   updateLog(T); dirty=true;
 }
-function jump(t){ touched=true; stop(); setT(t); }
+function jump(t){ touched=true; stop(); if(t===START_BP) openingElapsed=0; setT(t); }
 scrub.addEventListener("input",()=>{touched=true;setT(timeAt(scrub.value/10000),true);refreshPlay();});
 
 function refreshPlay(){
   el("playGlyph").textContent=playing?"❚❚":"▶";
-  el("playLabel").textContent=playing?"Pause":(touched?"Play":"Play from 300,000 BP");
+  el("playLabel").textContent=playing?"Pause":(touched?"Continue the journey":"Begin in East Africa");
+  el("scenePlay").textContent=playing?"❚❚ Pause":(touched?"▶ Continue":"▶ Begin");
 }
 function start(){
-  if(!touched||T<=60) setT(300000);
+  if(!touched||T<=60){ openingElapsed=0; setT(START_BP); }
+  touched=true;
   playing=true; lastFrame=performance.now(); refreshPlay();
 }
 function stop(){ playing=false; refreshPlay(); }
 el("play").addEventListener("click",()=>playing?stop():start());
+el("scenePlay").addEventListener("click",()=>playing?stop():start());
 el("toLGM").addEventListener("click",()=>jump(21000));
 el("toNow").addEventListener("click",()=>jump(0));
+el("toSapiens").addEventListener("click",()=>jump(300000));
+el("followCamera").addEventListener("change",e=>{followCamera=e.target.checked;dirty=true;});
+document.querySelectorAll("[data-chapter]").forEach(b=>b.addEventListener("click",()=>jump(Number(b.dataset.chapter))));
+document.querySelectorAll("[data-layer]").forEach(b=>b.addEventListener("click",()=>{
+  const group=b.dataset.layer; enabled[group]=!enabled[group];
+  b.setAttribute("aria-pressed",String(enabled[group]));
+  hoverSite=null; tip.classList.remove("on"); updateLog(T); dirty=true;
+}));
 document.querySelectorAll(".speeds button").forEach(b=>{
   b.addEventListener("click",()=>{
     speed=parseFloat(b.dataset.sp);
@@ -437,6 +509,7 @@ document.querySelectorAll(".speeds button").forEach(b=>{
   });
 });
 window.addEventListener("keydown",e=>{
+  if(e.target.closest("button, a, summary, select, textarea, input:not([type=range])")) return;
   if(e.target===mapViewport||e.target.tagName==="BUTTON") return;
   if(e.target.tagName==="INPUT"&&e.key!==" ") return;
   if(e.key===" "){ e.preventDefault(); playing?stop():start(); }
@@ -452,7 +525,7 @@ cv.addEventListener("pointermove",e=>{
   const r=cv.getBoundingClientRect();
   const mx=(e.clientX-r.left)/r.width*W, my=(e.clientY-r.top)/r.height*H;
   let best=null,bd=22*DPR;
-  for(const s of SITES){ if(T>s.t) continue;
+  for(const s of [...(enabled.sapiens?SITES:[]),...deepRenderer.visibleSites(T)]){ if(T>s.t) continue;
     const d=Math.hypot(px(s.x)-mx,py(s.y)-my); if(d<bd){bd=d;best=s;} }
   if(best!==hoverSite){ hoverSite=best; dirty=true; }
   if(best){
@@ -461,18 +534,19 @@ cv.addEventListener("pointermove",e=>{
     tip.style.top=(py(best.y)/H*r.height)+"px";
     tipB.textContent=best.n;
     const when=best.t>=1000?nf.format(Math.round(best.t/(best.t>=10000?1000:100))*(best.t>=10000?1:100))+(best.t>=10000?" ka":" yr"):best.t+" yr";
-    tipS.textContent=best.pl+" · "+when+" BP"+(best.c!=="firm"?" · "+best.c:"");
+    tipS.textContent=best.pl+" · "+(best.t>=1000000?formatAge(best.t):when)+" BP"+(best.group?" · "+LINEAGES[best.group].label:best.c!=="firm"?" · "+best.c:"");
     tipI.textContent=best.note;
   } else tip.classList.remove("on");
 });
 cv.addEventListener("pointerleave",()=>{tip.classList.remove("on"); if(hoverSite){hoverSite=null;dirty=true;}});
 
 /* ============================ LOOP ============================ */
-const DURATION=96000; // ms for a full 1x sweep
+const DURATION=96000/.54; // Added prologue, followed by the original 96-second sapiens sweep.
 // Paused dates are completely still; redraw only when something changes.
 function frame(now){
   if(playing){
-    const dt=Math.min(120,now-lastFrame); lastFrame=now;
+    const elapsed=now-lastFrame, dt=Math.min(120,elapsed); lastFrame=now;
+    if(T>3900000) openingElapsed+=elapsed;
     let p=pos(T)+ (dt/DURATION)*speed;
     if(p>=1){ p=1; setT(0); stop(); } else setT(timeAt(p));
   }
@@ -483,6 +557,6 @@ function frame(now){
 const ro=new ResizeObserver(()=>sizeAll());
 ro.observe(cv);
 sizeAll();
-setT(21000);
+setT(START_BP);
 refreshPlay();
 requestAnimationFrame(frame);
